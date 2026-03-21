@@ -5,9 +5,9 @@ from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, Con
 import openai
 
 # --- ENV ---
-TOKEN = os.environ.get("BOT_TOKEN")
-ADMIN_ID = int(os.environ.get("ADMIN_ID"))
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+TOKEN = os.environ.get("8669068486:AAH6hc44XeJBJi2hdcWrBPipc_zFhBEhT38")
+ADMIN_ID = int(os.environ.get("5129264309"))
+OPENAI_API_KEY = os.environ.get("ghp_DvJ2Ndpr00RqxqRcmcgIktm13Px9F30x1sJz)
 
 openai.api_key = OPENAI_API_KEY
 
@@ -96,7 +96,7 @@ if __name__ == "__main__":
     async def setup():
         await app_telegram.initialize()
         await app_telegram.bot.set_webhook(
-            url=f"https://your-app-name.onrender.com/{TOKEN}"
+            url=f"https://bot-tdqt.onrender.com/{TOKEN}"
         )
 
     asyncio.run(setup())
