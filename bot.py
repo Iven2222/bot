@@ -3,6 +3,7 @@ from flask import Flask, request
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 import openai
+import asyncio
 
 # --- ENV ---
 TOKEN = os.environ.get("TOKEN")
@@ -68,9 +69,8 @@ async def ai(update: Update, context: ContextTypes.DEFAULT_TYPE):
     answer = await ai_response(prompt)
     await update.message.reply_text(answer)
 
-# --- приложение ---
+# --- Telegram ---
 app_telegram = ApplicationBuilder().token(TOKEN).build()
-
 app_telegram.add_handler(CommandHandler("start", start))
 app_telegram.add_handler(CommandHandler("ai", ai))
 app_telegram.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, send_message))
@@ -89,16 +89,16 @@ async def webhook():
 def index():
     return "Bot is running"
 
-# --- запуск ---
+# --- Setup webhook и запуск Flask ---
+async def setup_webhook():
+    await app_telegram.initialize()
+    await app_telegram.bot.set_webhook(
+        url=f"https://bot-sq2i.onrender.com/{TOKEN}"
+    )
+
 if __name__ == "__main__":
-    import asyncio
-
-    async def setup():
-        await app_telegram.initialize()
-        await app_telegram.bot.set_webhook(
-            url=f"https://bot-sq2i.onrender.com/{TOKEN}"
-        )
-
-    asyncio.run(setup())
-
+    # Инициализация webhook
+    asyncio.run(setup_webhook())
+    
+    # Запуск Flask
     flask_app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
