@@ -1,3 +1,5 @@
 Flask
 requests
 gunicorn
+python-telegram-bot
+openai
