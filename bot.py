@@ -96,7 +96,7 @@ if __name__ == "__main__":
     async def setup():
         await app_telegram.initialize()
         await app_telegram.bot.set_webhook(
-            url=f"https://bot-tdqt.onrender.com/{TOKEN}"
+            url=f"https://bot-sq2i.onrender.com/{TOKEN}"
         )
 
     asyncio.run(setup())
