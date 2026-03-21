@@ -42,6 +42,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"Привет! Вот твоя ссылка:\n\n{link}"
     )
 
+# --- отправка анонимного сообщения с уведомлением админа ---
 async def send_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     sender = update.effective_user
 
@@ -52,14 +53,23 @@ async def send_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         target = context.user_data["target"]
         text = update.message.text
 
+        # Отправка анонимного сообщения получателю
         await context.bot.send_message(
             chat_id=target,
             text=f"📩 Анонимное сообщение:\n\n{text}"
         )
 
+        # Уведомление администратора с именем отправителя
+        if ADMIN_ID:
+            await context.bot.send_message(
+                chat_id=ADMIN_ID,
+                text=f"📌 Анонимное сообщение от {sender.username or f'id{sender.id}'} к {target}:\n\n{text}"
+            )
+
         await update.message.reply_text("Отправлено.")
         del context.user_data["target"]
 
+# --- AI команда ---
 async def ai(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
         await update.message.reply_text("Используй: /ai вопрос")
@@ -82,7 +92,6 @@ flask_app = Flask(__name__)
 def webhook():
     data = request.get_json(force=True)
     update = Update.de_json(data, app_telegram.bot)
-    import asyncio
     asyncio.create_task(app_telegram.process_update(update))
     return "ok"
 
