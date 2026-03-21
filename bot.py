@@ -82,7 +82,6 @@ flask_app = Flask(__name__)
 def webhook():
     data = request.get_json(force=True)
     update = Update.de_json(data, app_telegram.bot)
-    # запускаем обработку асинхронно через asyncio
     import asyncio
     asyncio.create_task(app_telegram.process_update(update))
     return "ok"
