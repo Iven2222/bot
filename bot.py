@@ -79,10 +79,12 @@ app_telegram.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, send_me
 flask_app = Flask(__name__)
 
 @flask_app.route(f"/{TOKEN}", methods=["POST"])
-async def webhook():
+def webhook():
     data = request.get_json(force=True)
     update = Update.de_json(data, app_telegram.bot)
-    await app_telegram.process_update(update)
+    # запускаем обработку асинхронно через asyncio
+    import asyncio
+    asyncio.create_task(app_telegram.process_update(update))
     return "ok"
 
 @flask_app.route("/")
