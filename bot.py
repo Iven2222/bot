@@ -8,7 +8,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 TOKEN = os.environ.get("TOKEN")
 ADMIN_ID = int(os.environ.get("ADMIN_ID", 0))
 
-BOT_USERNAME = "ТВОЙ_ЮЗЕРНЕЙМ_БОТА"  # без @
+BOT_USERNAME = "testarogbot"  # без @
 
 bans = {}  # {user_id: username}
 users = {}  # {user_id: username}
