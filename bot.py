@@ -36,10 +36,21 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("❌ Используй ссылку, чтобы отправить сообщение.")
         return
 
-    # отправляем сообщение получателю
+    username = user.username if user.username else "без username"
+
+    # если получатель — админ → показываем отправителя
+    if target_id == ADMIN_ID:
+        text = (
+            f"📩 Новое сообщение:\n\n{update.message.text}\n\n"
+            f"👤 @{username}\n🆔 {user.id}"
+        )
+    else:
+        text = f"📩 Новое анонимное сообщение:\n\n{update.message.text}"
+
+    # отправляем сообщение
     await context.bot.send_message(
         chat_id=target_id,
-        text=f"📩 Новое анонимное сообщение:\n\n{update.message.text}"
+        text=text
     )
 
     await update.message.reply_text("✅ Отправлено")
