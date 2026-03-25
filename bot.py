@@ -8,6 +8,11 @@ bans = {}  # {user_id: username}
 users = {}  # {user_id: username}
 
 
+# --- проверка админа ---
+def is_admin(user_id):
+    return user_id == ADMIN_ID
+
+
 # --- сохраняем пользователей ---
 async def save_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
@@ -37,9 +42,26 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("✅ Отправлено")
 
 
+# --- команда admin ---
+async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not is_admin(update.effective_user.id):
+        await update.message.reply_text("❌ Только админ может использовать эту команду.")
+        return
+
+    text = (
+        "⚙️ Админ команды:\n\n"
+        "/ban username — забанить\n"
+        "/unban username — разбанить\n"
+        "/banlist — список банов\n"
+    )
+
+    await update.message.reply_text(text)
+
+
 # --- бан ---
 async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_user.id != ADMIN_ID:
+    if not is_admin(update.effective_user.id):
+        await update.message.reply_text("❌ Только админ может использовать эту команду.")
         return
 
     if not context.args:
@@ -65,7 +87,8 @@ async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # --- разбан ---
 async def unban(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_user.id != ADMIN_ID:
+    if not is_admin(update.effective_user.id):
+        await update.message.reply_text("❌ Только админ может использовать эту команду.")
         return
 
     if not context.args:
@@ -91,7 +114,8 @@ async def unban(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # --- список ---
 async def banlist(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_user.id != ADMIN_ID:
+    if not is_admin(update.effective_user.id):
+        await update.message.reply_text("❌ Только админ может использовать эту команду.")
         return
 
     if not bans:
@@ -111,6 +135,7 @@ app = ApplicationBuilder().token(TOKEN).build()
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, save_user))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
+app.add_handler(CommandHandler("admin", admin_panel))
 app.add_handler(CommandHandler("ban", ban))
 app.add_handler(CommandHandler("unban", unban))
 app.add_handler(CommandHandler("banlist", banlist))
