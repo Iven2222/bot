@@ -1,8 +1,14 @@
+import os
+import logging
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, CommandHandler, ContextTypes, filters
 
-TOKEN = "8669068486:AAH6hc44XeJBJi2hdcWrBPipc_zFhBEhT38"
-ADMIN_ID = 5129264309
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
+TOKEN = os.environ.get("TOKEN")
+ADMIN_ID = int(os.environ.get("ADMIN_ID", 0))
+
+BOT_USERNAME = "ТВОЙ_ЮЗЕРНЕЙМ_БОТА"  # без @
 
 bans = {}  # {user_id: username}
 users = {}  # {user_id: username}
@@ -13,33 +19,53 @@ def is_admin(user_id):
     return user_id == ADMIN_ID
 
 
-# --- сохраняем пользователей ---
-async def save_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user = update.effective_user
-    users[user.id] = user.username
-
-
 # --- сообщения ---
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
+    users[user.id] = user.username
+    logging.info(f"Сообщение от {user.id} @{user.username}: {update.message.text}")
 
     if user.id in bans:
         await update.message.reply_text("🚫 Вы забанены.")
         return
 
-    username = user.username if user.username else "без username"
+    # проверяем, есть ли получатель
+    target_id = context.user_data.get("target")
 
-    await context.bot.send_message(
-        chat_id=ADMIN_ID,
-        text=f"📩 Сообщение:\n{update.message.text}"
-    )
+    if not target_id:
+        await update.message.reply_text("❌ Используй ссылку, чтобы отправить сообщение.")
+        return
 
+    # отправляем сообщение получателю
     await context.bot.send_message(
-        chat_id=ADMIN_ID,
-        text=f"👤 @{username}\n🆔 {user.id}"
+        chat_id=target_id,
+        text=f"📩 Новое анонимное сообщение:\n\n{update.message.text}"
     )
 
     await update.message.reply_text("✅ Отправлено")
+
+
+# --- команда start ---
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    users[user.id] = user.username
+    logging.info(f"Новый пользователь: {user.id} @{user.username}")
+
+    # если есть аргумент (переход по ссылке)
+    if context.args:
+        target_id = context.args[0]
+        context.user_data["target"] = int(target_id)
+
+        await update.message.reply_text("✉️ Напиши сообщение, и я анонимно отправлю его пользователю.")
+        return
+
+    # обычный старт
+    link = f"https://t.me/{BOT_USERNAME}?start={user.id}"
+
+    await update.message.reply_text(
+        "👋 Привет, я бот для анонимных сообщений! Поделись этой ссылкой чтобы получать сообщения 😃\n\n"
+        f"{link}"
+    )
 
 
 # --- команда admin ---
@@ -129,16 +155,24 @@ async def banlist(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(text)
 
 
+# --- обработчик ошибок ---
+async def error_handler(update, context: ContextTypes.DEFAULT_TYPE):
+    logging.error(f"Ошибка: {context.error}", exc_info=context.error)
+    if update and update.message:
+        await update.message.reply_text("⚠️ Произошла ошибка. Попробуй ещё раз.")
+
+
 # --- запуск ---
 app = ApplicationBuilder().token(TOKEN).build()
+app.add_error_handler(error_handler)
 
-app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, save_user))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
+app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("admin", admin_panel))
 app.add_handler(CommandHandler("ban", ban))
 app.add_handler(CommandHandler("unban", unban))
 app.add_handler(CommandHandler("banlist", banlist))
 
-print("Бот работает...")
+print(f"Бот работает... TOKEN задан: {bool(TOKEN)}, ADMIN_ID: {ADMIN_ID}")
 app.run_polling()
